@@ -1,0 +1,17 @@
+{
+    "Domain": "${{ values.domain_name }}",
+    "System": "${{ values.system_name }}",
+    "Component": $env.GITHUB_REPOSITORY_NAME_PART_SLUG_CS,
+    "CodeBranch": $env.GITHUB_REF_SLUG_CS,
+    "VpcId": "/org/networking/VpcId",
+    "VpcSubnets": "/org/networking/VpcPrivateSubnets",
+    "DbEngine": "${{ values.db_engine}}",
+    "DbEngineVersion": "${{ values.db_engine_version }}",
+    "DbFamily": "${{ values.db_engine}}${{ values.db_engine_version }}",
+    "DbPort": "${{ values.db_port }}",
+    "DbUsername": "${{ values.db_username }}",
+    "RdsScalingMinCapacity": "${{ values.min_capacity }}",
+    "RdsScalingMaxCapacity": "${{ values.max_capacity }}",
+    "RdsScalingMinInstances": "${{ values.min_instances }}",
+    "RdsScalingMaxInstances": "${{ values.max_instances }}"
+}

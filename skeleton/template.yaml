@@ -1,0 +1,239 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  ${{ values.component_name }}
+
+  ${{ values.component_description }}
+
+
+Parameters:
+  Domain:
+    Type: String
+    Description: 'Name of Domain'
+
+  System:
+    Type: String
+    Description: "Name of System"
+
+  Component:
+    Type: String
+    Description: "Name of Component"
+
+  CodeBranch:
+    Type: String
+    Description: "Name of GitHub Branch"
+
+  DbFamily:
+    Type: String
+    Description: "DB family"
+
+  DbEngine:
+    Type: String
+    Description: "DB engine"
+
+  DbEngineVersion:
+    Type: String
+    Description: "DB engine version"
+
+  DbUsername:
+    Type: String
+    Description: "DB Backstage username"
+    Default: postgres
+
+  DbPort:
+    Type: String
+    Description: "DB port"
+
+  RdsScalingMinCapacity:
+    Type: Number
+    Description: "RDS scaling min capacity"
+
+  RdsScalingMaxCapacity:
+    Type: Number
+    Description: "RDS scaling max capacity"
+
+  RdsScalingMinInstances:
+    Type: Number
+    Description: "RDS scaling min instances"
+
+  RdsScalingMaxInstances:
+    Type: Number
+    Description: "RDS scaling max instances"
+
+  VpcId:
+    Type: AWS::SSM::Parameter::Value<String>
+    Description: Account VPC ID
+
+  VpcSubnets:
+    Type: AWS::SSM::Parameter::Value<CommaDelimitedList>
+    Description: Account subnets (private)
+
+  ClientSecurityGroupId:
+    Type: AWS::SSM::Parameter::Value<String>
+    Description: ID of client security group
+    Default: ''
+
+
+Conditions:
+  HasClientSecurityGroup: !Not [!Equals [!Ref ClientSecurityGroupId, '']]
+
+
+Resources:
+  ########
+  # RDS
+  ########
+
+  ## Admin Password
+  RdsDbAdminPassword:
+    Type: AWS::SecretsManager::Secret
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      Description: Backstage RDS Admin Password
+      GenerateSecretString:
+        SecretStringTemplate: !Sub '{"username": "${DbUsername}"}'
+        GenerateStringKey: 'password'
+        PasswordLength: 64
+        ExcludePunctuation: true
+
+  ## DB Cluster
+  RdsDbClusterParameterGroup:
+    Type: AWS::RDS::DBClusterParameterGroup
+    Properties:
+      Description: Aurora Postgresql Cluster Parameter Group
+      Family: !Ref DbFamily
+      Parameters:
+        rds.force_ssl: 1
+        log_connections: true
+        log_disconnections: true
+
+  RdsDbSubnetGroup:
+    Type: 'AWS::RDS::DBSubnetGroup'
+    Properties:
+      DBSubnetGroupDescription: !Sub '${AWS::StackName} Subnet Group'
+      SubnetIds: !Ref VpcSubnets
+
+  RdsSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: !Sub '${AWS::StackName} Security Group'
+      VpcId: !Ref VpcId
+
+  RdsDbCluster:
+    Type: AWS::RDS::DBCluster
+    UpdateReplacePolicy: Snapshot
+    DeletionPolicy: Snapshot
+    Properties:
+      Engine: !Ref DbEngine
+      EngineVersion: !Ref DbEngineVersion
+      Port: !Ref DbPort
+      DBClusterParameterGroupName: !Ref RdsDbClusterParameterGroup
+      DBSubnetGroupName: !Ref RdsDbSubnetGroup
+      VpcSecurityGroupIds:
+        - !Ref RdsSecurityGroup
+      BackupRetentionPeriod: 7
+      DeletionProtection: false
+      MasterUsername: !Ref DbUsername
+      MasterUserPassword: !Join ['', ['{{resolve:secretsmanager:', !Ref RdsDbAdminPassword, ':SecretString:password}}' ]]
+      UseLatestRestorableTime: true
+      ServerlessV2ScalingConfiguration:
+        MaxCapacity: !Ref RdsScalingMaxCapacity
+        MinCapacity: !Ref RdsScalingMinCapacity
+        SecondsUntilAutoPause: 3600   # 1 hour
+      KmsKeyId: alias/aws/rds
+      StorageEncrypted: true
+      EnableCloudwatchLogsExports:
+        - postgresql
+      PreferredBackupWindow: 03:00-04:00
+
+  RdsDbInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceClass: db.serverless
+      DBClusterIdentifier: !Ref RdsDbCluster
+      Engine: aurora-postgresql
+
+  RdsDbClusterScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: !Ref RdsScalingMaxInstances
+      MinCapacity: !Ref RdsScalingMinInstances
+      RoleARN: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/aws-service-role/rds.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_RDSCluster'
+      ServiceNamespace: rds
+      ScalableDimension: rds:cluster:ReadReplicaCount
+      ResourceId: !Sub "cluster:${RdsDbCluster}"
+
+  RdsDbClusterScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub "${RdsDbCluster} Scaling"
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref RdsDbClusterScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 80
+        PredefinedMetricSpecification:
+          PredefinedMetricType: RDSReaderAverageCPUUtilization
+        ScaleInCooldown: 600
+        ScaleOutCooldown: 300
+
+  ## ECS Network Access
+  # NOTE: This resource is conditional on having a security group ID for clients defined.
+  RdsSecurityGroupIngressContainers:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: HasClientSecurityGroup
+    Properties:
+      Description: Container to RDS ingress
+      GroupId: !Ref RdsSecurityGroup
+      IpProtocol: tcp
+      FromPort: !Ref DbPort
+      ToPort: !Ref DbPort
+      SourceSecurityGroupId: !Ref ClientSecurityGroupId
+
+  # SSM Values
+  RdsDbClusterNameSsmParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Description: Name of RDS cluster
+      Name: !Sub /${Domain}/${System}/${Component}/${CodeBranch}/RdsDbClusterName
+      Value: !Ref RdsDbCluster
+
+  RdsDbClusterHostSsmParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Description: Hostname of R/W DB endpoint
+      Name: !Sub /${Domain}/${System}/${Component}/${CodeBranch}/RdsDbClusterHost
+      Value: !GetAtt RdsDbCluster.Endpoint.Address
+
+  RdsDbClusterROHostSsmParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Description: DB endpoint port
+      Name: !Sub /${Domain}/${System}/${Component}/${CodeBranch}/RdsDbClusterROHost
+      Value: !GetAtt RdsDbCluster.ReadEndpoint.Address
+
+  RdsDbClusterPortSsmParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Description: Hostname of read-only DB endpoint
+      Name: !Sub /${Domain}/${System}/${Component}/${CodeBranch}/RdsDbClusterPort
+      Value: !GetAtt RdsDbCluster.Endpoint.Port
+
+  RdsDbAdminUsernameSsmParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Description: Backstage RDS Admin Password
+      Name: !Sub /${Domain}/${System}/${Component}/${CodeBranch}/RdsDbAdminUsername
+      Value: !Ref DbUsername
+
+  RdsDbAdminPasswordSsmParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Description: Backstage RDS Admin Password
+      Name: !Sub /${Domain}/${System}/${Component}/${CodeBranch}/RdsDbAdminPassword
+      Value: !Ref RdsDbAdminPassword

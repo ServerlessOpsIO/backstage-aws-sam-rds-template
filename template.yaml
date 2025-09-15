@@ -1,0 +1,217 @@
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: aws-sam-rds-postgres
+  title: AWS RDS
+  description: |
+    Create an RDS cluster
+
+  tags:
+    - aws
+    - rds
+    - postgres
+    - database
+    - data
+
+spec:
+  owner: group:00gjdgxs1ur6lsu
+  type: component
+
+  parameters:
+    - title: RDS Cluster Information
+      description: Basic information about the RDS cluster to create
+      required:
+        - namespace
+        - name
+        - description
+        - owner
+        - system
+        - domain
+        - account_id
+      properties:
+        lifecycle:
+          title: Lifecycle
+          type: string
+          description: Lifecycle for the component
+          default: production
+          ui:widget: hidden
+        namespace:
+          title: Namespace
+          type: string
+          description: Namespace for the component
+          default: default
+          ui:widget: hidden
+        name:
+          title: Cluster name
+          type: string
+          description: Unique name of the software repository
+          ui:field: EntityNamePicker
+        description:
+          title: Description
+          type: string
+          description: Short description of the component
+        owner:
+          title: Owner
+          type: string
+          description: |
+            Owning group of entity.
+          ui:field: MyGroupsPicker
+          ui:options:
+            allowArbitraryValues: false
+        domain:
+          title: Domain
+          type: string
+          description: Domain the component belongs to.
+          ui:field: SoContextualEntityPicker
+          ui:options:
+            allowArbitraryValues: false
+            catalogFilter:
+              - kind: Domain
+            defaultKind: Domain
+        system:
+          title: System
+          type: string
+          description: System the component belongs to.
+          ui:field: SoContextualEntityPicker
+          ui:options:
+            allowArbitraryValues: false
+            catalogFilter:
+              - kind: System
+                relations.partOf: "{{ parameters.domain }}"
+            defaultKind: System
+        account_id:
+          title: Account ID
+          type: string
+          description: Cloud account to deploy to
+          ui:field: SoContextualEntityPicker
+          ui:options:
+            allowArbitraryValues: false
+            catalogFilter:
+              - kind: Resource
+                relations.partOf: "{{ parameters.system }}"
+                spec.type: cloud-account
+            defaultKind: System
+
+    - title: RDS Cluster Configuration
+      description: Configuration for the RDS cluster to create
+      required:
+        - db_engine
+        - db_engine_version
+        - db_username
+        - db_port
+      properties:
+        db_engine:
+          title: DB Engine
+          type: string
+          description: Database engine to use
+          enum:
+            - aurora-postgresql
+        db_engine_version:
+          title: DB Engine Version
+          type: string
+          description: Version of the database engine to use
+          enum:
+            - "16"
+        db_username:
+          title: DB Username
+          type: string
+          description: Username for the database
+          default: postgres
+        db_port:
+          title: DB Port
+          type: integer
+          description: Port for the database
+          default: 5432
+
+    - title: RDS Cluster Size
+      description: Size and scaling configuration for the RDS cluster to create
+      required:
+        - min_instances
+        - max_instances
+        - min_capacity
+        - max_capacity
+      properties:
+        min_instances:
+          title: Min Instances
+          type: integer
+          description: Minimum number of instances in the cluster
+          default: 1
+        max_instances:
+          title: Max Instances
+          type: integer
+          description: Maximum number of instances in the cluster
+          default: 3
+        min_capacity:
+          title: Min Capacity
+          type: integer
+          description: Minimum capacity for the cluster
+          default: 0
+        max_capacity:
+          title: Max Capacity
+          type: integer
+          description: Maximum capacity for the cluster
+          default: 4
+
+
+  steps:
+    - id: cluster
+      name: Create Project
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          component_namespace: ${{ parameters.namespace }}
+          lifecycle: ${{ parameters.lifecycle }}
+          domain_entity: ${{ parameters.domain }}
+          domain_title: ${{ parameters.domain | parseEntityRef | pick('title') }}
+          domain_name: ${{ parameters.domain | parseEntityRef | pick('name') }}
+          system_entity: ${{ parameters.system }}
+          system_title: ${{ parameters.system | parseEntityRef | pick('title') }}
+          system_name: ${{ parameters.system | parseEntityRef | pick('name') }}
+          component_name: ${{ parameters.name | lower }}
+          component_description: ${{ parameters.description }}
+          owner_name: ${{ parameters.owner | parseEntityRef | pick('name') }}
+          db_engine: ${{ parameters.db_engine }}
+          db_engine_version: ${{ parameters.db_engine_version }}
+          db_username: ${{ parameters.db_username }}
+          db_port: ${{ parameters.db_port }}
+          min_instances: ${{ parameters.min_instances }}
+          max_instances: ${{ parameters.max_instances }}
+          min_capacity: ${{ parameters.min_capacity }}
+          max_capacity: ${{ parameters.max_capacity }}
+          github_org: ${{ parameters.github_org }}
+
+    - id: cluster-pipeline
+      name: Create Project Pipeline
+      action: fetch:template
+      input:
+        url: ./pipeline
+
+    - id: publish
+      name: Publish to GitHub
+      action: publish:github
+      input:
+        owner: tmclaugh
+        repoUrl: github.com?repo=${{ parameters.name | lower }}&owner=ServerlessOpsIO
+        repoVisibility: public
+        protectDefaultBranch: false
+        requiredApprovingReviewCount: 0
+        description: ${{ parameters.description }}
+        gitAuthorName: ${{ user.entity.spec.profile.displayName }}
+        gitAuthorEmail:  ${{ user.entity.spec.profile.email }}
+        gitCommitMessage: "Initial commit via Backstage"
+        defaultBranch: main
+        secrets:
+          DEPLOYMENT_ACCOUNT_ID: ${{ parameters.account_id | parseEntityRef | pick('title') }}
+        customProperties:
+          system: ${{ parameters.system | parseEntityRef | pick('name') }}
+          domain: ${{ parameters.domain | parseEntityRef | pick('name') }}
+          owner: ${{ parameters.owner | parseEntityRef | pick('name') }}
+
+    - id: register
+      name: Register in Backstage
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: "/catalog-info.yaml"
