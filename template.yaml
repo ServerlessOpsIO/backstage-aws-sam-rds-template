@@ -13,6 +13,7 @@ metadata:
     - postgres
     - database
     - data
+    - infrastructure
 
 spec:
   owner: group:00gjdgxs1ur6lsu
