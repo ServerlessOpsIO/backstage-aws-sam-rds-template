@@ -23,7 +23,9 @@ spec:
     - title: RDS Cluster Information
       description: Basic information about the RDS cluster to create
       required:
+        - lifecycle
         - namespace
+        - github_org
         - name
         - description
         - owner
@@ -42,6 +44,12 @@ spec:
           type: string
           description: Namespace for the component
           default: default
+          ui:widget: hidden
+        github_org:
+          title: GitHub Org
+          type: string
+          description: GitHub organization to publish to
+          default: ServerlessOpsIO
           ui:widget: hidden
         name:
           title: Cluster name
