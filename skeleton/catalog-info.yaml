@@ -7,9 +7,7 @@ metadata:
   annotations:
     github.com/project-slug: ${{ values.github_org }}/${{ values.component_name }}
 spec:
-  type: api
+  type: iac
   lifecycle: ${{ values.lifecycle }}
   owner: group:${{ values.owner_name }}
   system: system:${{ values.system_name }}
-  providesApis:
-    - resource:${{ values.component_name }}

@@ -52,7 +52,7 @@ spec:
           default: ServerlessOpsIO
           ui:widget: hidden
         name:
-          title: Cluster name
+          title: Component name
           type: string
           description: Unique name of the software repository
           ui:field: EntityNamePicker
@@ -164,6 +164,30 @@ spec:
 
 
   steps:
+    - id: fetch-domain
+      name: Fetch Domain
+      action: catalog:fetch
+      input:
+        entityRefs: ${{ parameters.domain }}
+
+    - id: fetch-system
+      name: Fetch System
+      action: catalog:fetch
+      input:
+        entityRefs: ${{ parameters.system }}
+
+    - id: fetch-owner
+      name: Fetch Owner
+      action: catalog:fetch
+      input:
+        entityRefs: ${{ parameters.owner }}
+
+    - id: fetch-account
+      name: Fetch Cloud Account
+      action: catalog:fetch
+      input:
+        entityRefs: ${{ parameters.account_id }}
+
     - id: cluster
       name: Create Project
       action: fetch:template
@@ -173,14 +197,12 @@ spec:
           component_namespace: ${{ parameters.namespace }}
           lifecycle: ${{ parameters.lifecycle }}
           domain_entity: ${{ parameters.domain }}
-          domain_title: ${{ parameters.domain | parseEntityRef | pick('title') }}
-          domain_name: ${{ parameters.domain | parseEntityRef | pick('name') }}
+          domain_name: ${{ steps['fetch-domain'].output.entity.metadata.title }}
           system_entity: ${{ parameters.system }}
-          system_title: ${{ parameters.system | parseEntityRef | pick('title') }}
-          system_name: ${{ parameters.system | parseEntityRef | pick('name') }}
+          system_name: ${{ steps['fetch-system'].output.entity.metadata.title }}
           component_name: ${{ parameters.name | lower }}
           component_description: ${{ parameters.description }}
-          owner_name: ${{ parameters.owner | parseEntityRef | pick('name') }}
+          owner_name: ${{ steps['fetch-owner'].output.entity.metadata.title }}
           db_engine: ${{ parameters.db_engine }}
           db_engine_version: ${{ parameters.db_engine_version }}
           db_username: ${{ parameters.db_username }}
@@ -212,11 +234,11 @@ spec:
         gitCommitMessage: "Initial commit via Backstage"
         defaultBranch: main
         secrets:
-          DEPLOYMENT_ACCOUNT_ID: ${{ parameters.account_id | parseEntityRef | pick('title') }}
+          DEPLOYMENT_ACCOUNT_ID: ${{ steps['fetch-account'].output.entity.metadata.title }}
         customProperties:
-          system: ${{ parameters.system | parseEntityRef | pick('name') }}
-          domain: ${{ parameters.domain | parseEntityRef | pick('name') }}
-          owner: ${{ parameters.owner | parseEntityRef | pick('name') }}
+          system: ${{ steps['fetch-system'].output.entity.metadata.title }}
+          domain: ${{ steps['fetch-domain'].output.entity.metadata.title }}
+          owner: ${{ steps['fetch-owner'].output.entity.metadata.title }}
 
     - id: register
       name: Register in Backstage
