@@ -223,7 +223,6 @@ spec:
       name: Publish to GitHub
       action: publish:github
       input:
-        owner: tmclaugh
         repoUrl: github.com?repo=${{ parameters.name | lower }}&owner=ServerlessOpsIO
         repoVisibility: public
         protectDefaultBranch: false
