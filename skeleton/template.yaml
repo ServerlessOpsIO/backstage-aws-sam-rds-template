@@ -68,16 +68,6 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<CommaDelimitedList>
     Description: Account subnets (private)
 
-  ClientSecurityGroupId:
-    Type: AWS::SSM::Parameter::Value<String>
-    Description: ID of client security group
-    Default: ''
-
-
-Conditions:
-  HasClientSecurityGroup: !Not [!Equals [!Ref ClientSecurityGroupId, '']]
-
-
 Resources:
   ########
   # RDS
@@ -176,19 +166,6 @@ Resources:
         ScaleInCooldown: 600
         ScaleOutCooldown: 300
 
-  ## ECS Network Access
-  # NOTE: This resource is conditional on having a security group ID for clients defined.
-  RdsSecurityGroupIngressContainers:
-    Type: AWS::EC2::SecurityGroupIngress
-    Condition: HasClientSecurityGroup
-    Properties:
-      Description: Container to RDS ingress
-      GroupId: !Ref RdsSecurityGroup
-      IpProtocol: tcp
-      FromPort: !Ref DbPort
-      ToPort: !Ref DbPort
-      SourceSecurityGroupId: !Ref ClientSecurityGroupId
-
   # SSM Values
   RdsDbClusterNameSsmParam:
     Type: AWS::SSM::Parameter
@@ -237,3 +214,11 @@ Resources:
       Description: Backstage RDS Admin Password
       Name: !Sub /${Domain}/${System}/${Component}/${CodeBranch}/RdsDbAdminPassword
       Value: !Ref RdsDbAdminPassword
+
+  RdsSecurityGroupIdSsmParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Description: Security Group ID of RDS
+      Name: !Sub /${Domain}/${System}/${Component}/${CodeBranch}/RdsSecurityGroupId
+      Value: !Ref RdsSecurityGroup
