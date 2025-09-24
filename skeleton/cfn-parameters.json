@@ -10,6 +10,7 @@
     "DbFamily": "${{ values.db_engine}}${{ values.db_engine_version }}",
     "DbPort": "${{ values.db_port }}",
     "DbUsername": "${{ values.db_username }}",
+{% if values.db_name -%}    "DbName": "${{ values.db_name }}",{% endif -%}
     "RdsScalingMinCapacity": "${{ values.min_capacity }}",
     "RdsScalingMaxCapacity": "${{ values.max_capacity }}",
     "RdsScalingMinInstances": "${{ values.min_instances }}",
