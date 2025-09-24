@@ -34,6 +34,11 @@ Parameters:
   DbEngineVersion:
     Type: String
     Description: "DB engine version"
+{% if values.db_name %}
+  DbName:
+    Type: String
+    Description: "Name of initial database to create on new cluster"
+{% endif %}
 
   DbUsername:
     Type: String
@@ -117,6 +122,9 @@ Resources:
       Engine: !Ref DbEngine
       EngineVersion: !Ref DbEngineVersion
       Port: !Ref DbPort
+{% if values.db_name %}
+      DatabaseName: !Ref DbName
+{% endif %}
       DBClusterParameterGroupName: !Ref RdsDbClusterParameterGroup
       DBSubnetGroupName: !Ref RdsDbSubnetGroup
       VpcSecurityGroupIds:

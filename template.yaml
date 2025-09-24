@@ -122,6 +122,10 @@ spec:
           description: Version of the database engine to use
           enum:
             - "16"
+        db_name:
+          title: DB Name
+          type: string
+          description: Name of initial database to create on cluster
         db_username:
           title: DB Username
           type: string
@@ -205,6 +209,7 @@ spec:
           owner_name: ${{ steps['fetch-owner'].output.entity.metadata.title }}
           db_engine: ${{ parameters.db_engine }}
           db_engine_version: ${{ parameters.db_engine_version }}
+          db_name: ${{ parameters.db_name }}
           db_username: ${{ parameters.db_username }}
           db_port: ${{ parameters.db_port }}
           min_instances: ${{ parameters.min_instances }}
