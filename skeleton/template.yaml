@@ -84,7 +84,7 @@ Resources:
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties:
-      Description: Backstage RDS Admin Password
+      Description: RDS Admin Password
       GenerateSecretString:
         SecretStringTemplate: !Sub '{"username": "${DbUsername}"}'
         GenerateStringKey: 'password'
