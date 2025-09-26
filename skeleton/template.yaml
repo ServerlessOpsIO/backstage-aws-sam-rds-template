@@ -42,7 +42,7 @@ Parameters:
 
   DbUsername:
     Type: String
-    Description: "DB Backstage username"
+    Description: "DB username"
     Default: postgres
 
   DbPort:
@@ -211,7 +211,7 @@ Resources:
     Type: AWS::SSM::Parameter
     Properties:
       Type: String
-      Description: Backstage RDS Admin Password
+      Description: RDS Admin Username
       Name: !Sub /${Domain}/${System}/${Component}/${CodeBranch}/RdsDbAdminUsername
       Value: !Ref DbUsername
 
@@ -219,7 +219,7 @@ Resources:
     Type: AWS::SSM::Parameter
     Properties:
       Type: String
-      Description: Backstage RDS Admin Password
+      Description: RDS Admin Password
       Name: !Sub /${Domain}/${System}/${Component}/${CodeBranch}/RdsDbAdminPassword
       Value: !Ref RdsDbAdminPassword
 
