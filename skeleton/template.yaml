@@ -107,6 +107,7 @@ Resources:
         PasswordLength: 64
         ExcludePunctuation: true
 
+
   ## DB Cluster
   RdsDbClusterParameterGroup:
     Type: AWS::RDS::DBClusterParameterGroup
@@ -117,18 +118,6 @@ Resources:
         rds.force_ssl: 1
         log_connections: true
         log_disconnections: true
-
-  RdsDbSubnetGroup:
-    Type: 'AWS::RDS::DBSubnetGroup'
-    Properties:
-      DBSubnetGroupDescription: !Sub '${AWS::StackName} Subnet Group'
-      SubnetIds: !Ref VpcSubnets
-
-  RdsSecurityGroup:
-    Type: 'AWS::EC2::SecurityGroup'
-    Properties:
-      GroupDescription: !Sub '${AWS::StackName} Security Group'
-      VpcId: !Ref VpcId
 
   RdsDbCluster:
     Type: AWS::RDS::DBCluster
@@ -163,6 +152,8 @@ Resources:
       PreferredMaintenanceWindow: !Ref RdsPreferredMaintenanceWindow
       CopyTagsToSnapshot: true
 
+
+  # DB insatnces
   RdsDbInstance0:
     Type: AWS::RDS::DBInstance
     Properties:
@@ -185,6 +176,22 @@ Resources:
       DBInstanceClass: db.serverless
       DBClusterIdentifier: !Ref RdsDbCluster
       Engine: aurora-postgresql
+
+
+  # DB Networking
+  RdsDbSubnetGroup:
+    Type: 'AWS::RDS::DBSubnetGroup'
+    Properties:
+      DBSubnetGroupDescription: !Sub '${AWS::StackName} Subnet Group'
+      SubnetIds: !Ref VpcSubnets
+
+  RdsSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: !Sub '${AWS::StackName} Security Group'
+      VpcId: !Ref VpcId
+
+
 
   # SSM Values
   RdsDbClusterNameSsmParam:
