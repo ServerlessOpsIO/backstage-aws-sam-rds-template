@@ -69,6 +69,13 @@ Parameters:
     Type: String
     Description: "Preferred weekly time range for maintenance"
 
+  RdsEnableHA:
+    Type: String
+    Description: Enable high availability for RDS; creates additional DB instances in cluster.
+    AllowedValues:
+      - "true"
+      - "false"
+
   VpcId:
     Type: AWS::SSM::Parameter::Value<String>
     Description: Account VPC ID
@@ -76,6 +83,11 @@ Parameters:
   VpcSubnets:
     Type: AWS::SSM::Parameter::Value<CommaDelimitedList>
     Description: Account subnets (private)
+
+
+Conditions:
+  IsRdsEnableHA: !Equals [!Ref RdsEnableHA, "true"]
+
 
 Resources:
   ########
@@ -151,8 +163,24 @@ Resources:
       PreferredMaintenanceWindow: !Ref RdsPreferredMaintenanceWindow
       CopyTagsToSnapshot: true
 
-  RdsDbInstance:
+  RdsDbInstance0:
     Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceClass: db.serverless
+      DBClusterIdentifier: !Ref RdsDbCluster
+      Engine: aurora-postgresql
+
+  RdsDbInstance1:
+    Type: AWS::RDS::DBInstance
+    Condition: IsRdsEnableHA
+    Properties:
+      DBInstanceClass: db.serverless
+      DBClusterIdentifier: !Ref RdsDbCluster
+      Engine: aurora-postgresql
+
+  RdsDbInstance2:
+    Type: AWS::RDS::DBInstance
+    Condition: IsRdsEnableHA
     Properties:
       DBInstanceClass: db.serverless
       DBClusterIdentifier: !Ref RdsDbCluster

@@ -13,6 +13,7 @@
 {% if values.db_name -%}    "DbName": "${{ values.db_name }}",{% endif -%}
     "RdsScalingMinCapacity": "${{ values.min_capacity }}",
     "RdsScalingMaxCapacity": "${{ values.max_capacity }}",
+    "RdsEnableHA": "false",
     "RdsBackupRetentionPeriod": "7",
     "RdsPreferredMaintenanceWindow": "sun:1:00-sun:03:00",
     "RdsPreferredBackupWindow": "03:01-05:00"
