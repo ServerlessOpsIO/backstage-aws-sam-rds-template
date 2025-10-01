@@ -65,6 +65,18 @@ Parameters:
     Type: Number
     Description: "RDS scaling max instances"
 
+  RdsBackupRetentionPeriod:
+    Type: Number
+    Description: "Number of days to retain backups"
+
+  RdsPreferredBackupWindow:
+    Type: String
+    Description: "Preferred daily time range for backups"
+
+  RdsPreferredMaintenanceWindow:
+    Type: String
+    Description: "Preferred weekly time range for maintenance"
+
   VpcId:
     Type: AWS::SSM::Parameter::Value<String>
     Description: Account VPC ID
@@ -129,7 +141,6 @@ Resources:
       DBSubnetGroupName: !Ref RdsDbSubnetGroup
       VpcSecurityGroupIds:
         - !Ref RdsSecurityGroup
-      BackupRetentionPeriod: 7
       DeletionProtection: false
       MasterUsername: !Ref DbUsername
       MasterUserPassword: !Join ['', ['{{resolve:secretsmanager:', !Ref RdsDbAdminPassword, ':SecretString:password}}' ]]
@@ -142,7 +153,10 @@ Resources:
       StorageEncrypted: true
       EnableCloudwatchLogsExports:
         - postgresql
-      PreferredBackupWindow: 03:00-04:00
+      BackupRetentionPeriod: !Ref RdsBackupRetentionPeriod
+      PreferredBackupWindow: !Ref RdsPreferredBackupWindow
+      PreferredMaintenanceWindow: !Ref RdsPreferredMaintenanceWindow
+      CopyTagsToSnapshot: true
 
   RdsDbInstance:
     Type: AWS::RDS::DBInstance
