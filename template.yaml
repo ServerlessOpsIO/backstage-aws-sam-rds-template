@@ -140,21 +140,9 @@ spec:
     - title: RDS Cluster Size
       description: Size and scaling configuration for the RDS cluster to create
       required:
-        - min_instances
-        - max_instances
         - min_capacity
         - max_capacity
       properties:
-        min_instances:
-          title: Min Instances
-          type: integer
-          description: Minimum number of instances in the cluster
-          default: 1
-        max_instances:
-          title: Max Instances
-          type: integer
-          description: Maximum number of instances in the cluster
-          default: 3
         min_capacity:
           title: Min Capacity
           type: integer
@@ -164,7 +152,7 @@ spec:
           title: Max Capacity
           type: integer
           description: Maximum capacity for the cluster
-          default: 4
+          default: 8
 
 
   steps:
@@ -212,8 +200,6 @@ spec:
           db_name: ${{ parameters.db_name }}
           db_username: ${{ parameters.db_username }}
           db_port: ${{ parameters.db_port }}
-          min_instances: ${{ parameters.min_instances }}
-          max_instances: ${{ parameters.max_instances }}
           min_capacity: ${{ parameters.min_capacity }}
           max_capacity: ${{ parameters.max_capacity }}
           github_org: ${{ parameters.github_org }}

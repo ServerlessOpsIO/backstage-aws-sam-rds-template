@@ -57,14 +57,6 @@ Parameters:
     Type: Number
     Description: "RDS scaling max capacity"
 
-  RdsScalingMinInstances:
-    Type: Number
-    Description: "RDS scaling min instances"
-
-  RdsScalingMaxInstances:
-    Type: Number
-    Description: "RDS scaling max instances"
-
   RdsBackupRetentionPeriod:
     Type: Number
     Description: "Number of days to retain backups"
@@ -165,29 +157,6 @@ Resources:
       DBInstanceClass: db.serverless
       DBClusterIdentifier: !Ref RdsDbCluster
       Engine: aurora-postgresql
-
-  RdsDbClusterScalableTarget:
-    Type: AWS::ApplicationAutoScaling::ScalableTarget
-    Properties:
-      MaxCapacity: !Ref RdsScalingMaxInstances
-      MinCapacity: !Ref RdsScalingMinInstances
-      RoleARN: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/aws-service-role/rds.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_RDSCluster'
-      ServiceNamespace: rds
-      ScalableDimension: rds:cluster:ReadReplicaCount
-      ResourceId: !Sub "cluster:${RdsDbCluster}"
-
-  RdsDbClusterScalingPolicy:
-    Type: AWS::ApplicationAutoScaling::ScalingPolicy
-    Properties:
-      PolicyName: !Sub "${RdsDbCluster} Scaling"
-      PolicyType: TargetTrackingScaling
-      ScalingTargetId: !Ref RdsDbClusterScalableTarget
-      TargetTrackingScalingPolicyConfiguration:
-        TargetValue: 80
-        PredefinedMetricSpecification:
-          PredefinedMetricType: RDSReaderAverageCPUUtilization
-        ScaleInCooldown: 600
-        ScaleOutCooldown: 300
 
   # SSM Values
   RdsDbClusterNameSsmParam:
