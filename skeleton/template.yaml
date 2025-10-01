@@ -148,7 +148,8 @@ Resources:
       ServerlessV2ScalingConfiguration:
         MaxCapacity: !Ref RdsScalingMaxCapacity
         MinCapacity: !Ref RdsScalingMinCapacity
-        SecondsUntilAutoPause: 3600   # 1 hour
+        # NOTE: Extend timeout for services with more stringent SLOs.
+        #SecondsUntilAutoPause: 300   # 5m; default
       KmsKeyId: alias/aws/rds
       StorageEncrypted: true
       EnableCloudwatchLogsExports:
