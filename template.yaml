@@ -109,6 +109,8 @@ spec:
         - db_engine_version
         - db_username
         - db_port
+        - min_capacity
+        - max_capacity
       properties:
         db_engine:
           title: DB Engine
@@ -136,13 +138,6 @@ spec:
           type: integer
           description: Port for the database
           default: 5432
-
-    - title: RDS Cluster Size
-      description: Size and scaling configuration for the RDS cluster to create
-      required:
-        - min_capacity
-        - max_capacity
-      properties:
         min_capacity:
           title: Min Capacity
           type: integer
