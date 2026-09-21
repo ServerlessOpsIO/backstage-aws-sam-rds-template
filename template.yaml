@@ -73,12 +73,11 @@ spec:
           title: Domain
           type: string
           description: Domain the component belongs to.
-          ui:field: SoContextualEntityPicker
+          ui:field: EntityPicker
           ui:options:
             allowArbitraryValues: false
             catalogFilter:
               - kind: Domain
-            defaultKind: Domain
         system:
           title: System
           type: string
@@ -89,7 +88,6 @@ spec:
             catalogFilter:
               - kind: System
                 relations.partOf: "{{ parameters.domain }}"
-            defaultKind: System
         environment:
           title: Environment
           type: string
