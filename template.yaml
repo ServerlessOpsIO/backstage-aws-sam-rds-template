@@ -132,7 +132,7 @@ spec:
           type: string
           description: Version of the database engine to use
           enum:
-            - "16"
+            - "18"
         db_name:
           title: DB Name
           type: string
