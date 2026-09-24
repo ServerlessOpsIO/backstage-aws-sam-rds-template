@@ -159,7 +159,7 @@ Resources:
     Properties:
       DBInstanceClass: db.serverless
       DBClusterIdentifier: !Ref RdsDbCluster
-      Engine: aurora-postgresql
+      Engine: !Ref DbEngine
 
   RdsDbInstance1:
     Type: AWS::RDS::DBInstance
@@ -167,7 +167,7 @@ Resources:
     Properties:
       DBInstanceClass: db.serverless
       DBClusterIdentifier: !Ref RdsDbCluster
-      Engine: aurora-postgresql
+      Engine: !Ref DbEngine
 
   RdsDbInstance2:
     Type: AWS::RDS::DBInstance
@@ -175,7 +175,7 @@ Resources:
     Properties:
       DBInstanceClass: db.serverless
       DBClusterIdentifier: !Ref RdsDbCluster
-      Engine: aurora-postgresql
+      Engine: !Ref DbEngine
 
 
   # DB Networking
