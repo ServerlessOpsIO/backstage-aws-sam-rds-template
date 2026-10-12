@@ -57,6 +57,12 @@ Parameters:
     Type: Number
     Description: "RDS scaling max capacity"
 
+{% if values.rds_snapshot_id %}
+  RdsSnapshotId:
+    Type: String
+    Description: "RDS snapshot identifier to restore from"
+{% endif %}
+
   RdsBackupRetentionPeriod:
     Type: Number
     Description: "Number of days to retain backups"
@@ -95,6 +101,7 @@ Resources:
   ########
 
   ## Admin Password
+{% if not values.rds_snapshot_id %}
   RdsDbAdminPassword:
     Type: AWS::SecretsManager::Secret
     DeletionPolicy: Retain
@@ -106,6 +113,7 @@ Resources:
         GenerateStringKey: 'password'
         PasswordLength: 64
         ExcludePunctuation: true
+{% endif %}
 
 
   ## DB Cluster
@@ -127,7 +135,7 @@ Resources:
       Engine: !Ref DbEngine
       EngineVersion: !Ref DbEngineVersion
       Port: !Ref DbPort
-{% if values.db_name %}
+{% if values.db_name and not values.rds_snapshot_id %}
       DatabaseName: !Ref DbName
 {% endif %}
       DBClusterParameterGroupName: !Ref RdsDbClusterParameterGroup
@@ -135,16 +143,22 @@ Resources:
       VpcSecurityGroupIds:
         - !Ref RdsSecurityGroup
       DeletionProtection: false
+{% if values.rds_snapshot_id %}
+      SnapshotIdentifier: !Ref RdsSnapshotId
+{% else %}
       MasterUsername: !Ref DbUsername
       MasterUserPassword: !Join ['', ['{{resolve:secretsmanager:', !Ref RdsDbAdminPassword, ':SecretString:password}}' ]]
       UseLatestRestorableTime: true
+{% endif %}
       ServerlessV2ScalingConfiguration:
         MaxCapacity: !Ref RdsScalingMaxCapacity
         MinCapacity: !Ref RdsScalingMinCapacity
         # NOTE: Extend timeout for services with more stringent SLOs.
         #SecondsUntilAutoPause: 300   # 5m; default
+{% if not values.rds_snapshot_id %}
       KmsKeyId: alias/aws/rds
       StorageEncrypted: true
+{% endif %}
       EnableCloudwatchLogsExports:
         - postgresql
       BackupRetentionPeriod: !Ref RdsBackupRetentionPeriod
@@ -226,6 +240,7 @@ Resources:
       Name: !Sub /${Domain}/${System}/${Component}/${CodeBranch}/RdsDbClusterPort
       Value: !GetAtt RdsDbCluster.Endpoint.Port
 
+{% if not values.rds_snapshot_id %}
   RdsDbAdminUsernameSsmParam:
     Type: AWS::SSM::Parameter
     Properties:
@@ -241,6 +256,7 @@ Resources:
       Description: RDS Admin Password
       Name: !Sub /${Domain}/${System}/${Component}/${CodeBranch}/RdsDbAdminPassword
       Value: !Ref RdsDbAdminPassword
+{% endif %}
 
   RdsSecurityGroupIdSsmParam:
     Type: AWS::SSM::Parameter
