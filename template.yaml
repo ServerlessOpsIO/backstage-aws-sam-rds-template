@@ -225,7 +225,7 @@ spec:
           db_port: ${{ parameters.db_port }}
           min_capacity: ${{ parameters.min_capacity }}
           max_capacity: ${{ parameters.max_capacity }}
-          rds_snapshot_id: ${{ parameters.snapshot_id | default('') }}
+          rds_snapshot_id: ${{ parameters.snapshot_id }}
           github_org: ${{ parameters.github_org }}
 
     - id: cluster-pipeline
