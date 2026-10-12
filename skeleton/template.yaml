@@ -57,6 +57,11 @@ Parameters:
     Type: Number
     Description: "RDS scaling max capacity"
 
+  RdsSnapshotId:
+    Type: String
+    Description: "RDS snapshot identifier to restore from"
+    Default: ""
+
   RdsBackupRetentionPeriod:
     Type: Number
     Description: "Number of days to retain backups"
@@ -87,6 +92,8 @@ Parameters:
 
 Conditions:
   IsRdsEnableHA: !Equals [!Ref RdsEnableHA, "true"]
+  HasRdsSnapshot: !Not [!Equals [!Ref RdsSnapshotId, ""]]
+  IsNewRdsCluster: !Equals [!Ref RdsSnapshotId, ""]
 
 
 Resources:
@@ -97,6 +104,7 @@ Resources:
   ## Admin Password
   RdsDbAdminPassword:
     Type: AWS::SecretsManager::Secret
+    Condition: IsNewRdsCluster
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties:
@@ -128,23 +136,24 @@ Resources:
       EngineVersion: !Ref DbEngineVersion
       Port: !Ref DbPort
 {% if values.db_name %}
-      DatabaseName: !Ref DbName
+      DatabaseName: !If [HasRdsSnapshot, !Ref AWS::NoValue, !Ref DbName]
 {% endif %}
       DBClusterParameterGroupName: !Ref RdsDbClusterParameterGroup
       DBSubnetGroupName: !Ref RdsDbSubnetGroup
       VpcSecurityGroupIds:
         - !Ref RdsSecurityGroup
       DeletionProtection: false
-      MasterUsername: !Ref DbUsername
-      MasterUserPassword: !Join ['', ['{{resolve:secretsmanager:', !Ref RdsDbAdminPassword, ':SecretString:password}}' ]]
-      UseLatestRestorableTime: true
+      MasterUsername: !If [HasRdsSnapshot, !Ref AWS::NoValue, !Ref DbUsername]
+      MasterUserPassword: !If [HasRdsSnapshot, !Ref AWS::NoValue, !Join ['', ['{{resolve:secretsmanager:', !Ref RdsDbAdminPassword, ':SecretString:password}}' ]]]
+      SnapshotIdentifier: !If [HasRdsSnapshot, !Ref RdsSnapshotId, !Ref AWS::NoValue]
+      UseLatestRestorableTime: !If [HasRdsSnapshot, !Ref AWS::NoValue, true]
       ServerlessV2ScalingConfiguration:
         MaxCapacity: !Ref RdsScalingMaxCapacity
         MinCapacity: !Ref RdsScalingMinCapacity
         # NOTE: Extend timeout for services with more stringent SLOs.
         #SecondsUntilAutoPause: 300   # 5m; default
-      KmsKeyId: alias/aws/rds
-      StorageEncrypted: true
+      KmsKeyId: !If [HasRdsSnapshot, !Ref AWS::NoValue, alias/aws/rds]
+      StorageEncrypted: !If [HasRdsSnapshot, !Ref AWS::NoValue, true]
       EnableCloudwatchLogsExports:
         - postgresql
       BackupRetentionPeriod: !Ref RdsBackupRetentionPeriod
@@ -228,6 +237,7 @@ Resources:
 
   RdsDbAdminUsernameSsmParam:
     Type: AWS::SSM::Parameter
+    Condition: IsNewRdsCluster
     Properties:
       Type: String
       Description: RDS Admin Username
@@ -236,6 +246,7 @@ Resources:
 
   RdsDbAdminPasswordSsmParam:
     Type: AWS::SSM::Parameter
+    Condition: IsNewRdsCluster
     Properties:
       Type: String
       Description: RDS Admin Password
