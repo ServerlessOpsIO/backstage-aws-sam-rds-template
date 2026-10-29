@@ -108,10 +108,19 @@ Changes to template inputs, generated files, required catalog entities, required
 secrets, required Backstage actions, or other prerequisites MUST update this
 repository's `README.md` in the same change; update a generated project's
 README when affected. A new or changed scaffolder action MUST be identified in
-the README together with the Backstage module providing it. Generated, OS, and
-editor files such as `.DS_Store`, `__pycache__`, and `node_modules` MUST NOT be
-committed. Work MUST use `feature/` or `bug/` branches referencing an issue
-number where one exists. Commit messages MUST use conventional-commit style
+the README together with the Backstage module providing it.
+
+Every new feature MUST be evaluated against the generated project's handbook
+in `skeleton/docs/handbook/` before it is planned and again before merge. The
+feature's specification or plan MUST record which handbook pages the feature
+affects, or that it affects none. Affected pages MUST be updated in the same
+change so the handbook describes the generated project as it will be rendered,
+including every affected option combination. When no page needs updating, the
+pull request MUST say so and why.
+
+Generated, OS, and editor files such as `.DS_Store`, `__pycache__`, and
+`node_modules` MUST NOT be committed. Work MUST use `feature/` or `bug/`
+branches referencing an issue number where one exists. Commit messages MUST use conventional-commit style
 such as `feat:`, `fix:`, or `refactor:`. Changes MUST merge through pull
 requests.
 
@@ -128,4 +137,4 @@ PATCH clarifies wording or makes a non-semantic refinement. An amendment MUST
 update the last-amended date and version. If a change's compliance impact is
 unclear, the pull request MUST explain the interpretation and rationale.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-29 | **Last Amended**: 2026-10-29
+**Version**: 1.1.0 | **Ratified**: 2026-10-29 | **Last Amended**: 2026-10-29
