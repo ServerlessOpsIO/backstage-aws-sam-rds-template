@@ -120,9 +120,9 @@ pull request MUST say so and why.
 
 Generated, OS, and editor files such as `.DS_Store`, `__pycache__`, and
 `node_modules` MUST NOT be committed. Work MUST use `feature/` or `bug/`
-branches referencing an issue number where one exists. Commit messages MUST use conventional-commit style
-such as `feat:`, `fix:`, or `refactor:`. Changes MUST merge through pull
-requests.
+branches referencing an issue number where one exists. Commit messages MUST
+use conventional-commit style such as `feat:`, `fix:`, or `refactor:`. Changes
+MUST merge through pull requests.
 
 ## Governance
 This constitution supersedes conflicting conventions in this repository.
