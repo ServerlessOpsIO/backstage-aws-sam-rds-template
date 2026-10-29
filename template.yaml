@@ -157,6 +157,25 @@ spec:
           type: integer
           description: Maximum capacity for the cluster
           default: 8
+        create_from_snapshot:
+          title: Create from snapshot?
+          type: boolean
+          default: false
+      dependencies:
+        create_from_snapshot:
+          oneOf:
+            - properties:
+                create_from_snapshot:
+                  const: false
+            - properties:
+                create_from_snapshot:
+                  const: true
+                snapshot_id:
+                  title: Snapshot ID
+                  type: string
+                  description: ID or ARN of the RDS snapshot to restore
+              required:
+                - snapshot_id
 
 
   steps:
@@ -206,6 +225,7 @@ spec:
           db_port: ${{ parameters.db_port }}
           min_capacity: ${{ parameters.min_capacity }}
           max_capacity: ${{ parameters.max_capacity }}
+          rds_snapshot_id: ${{ parameters.snapshot_id }}
           github_org: ${{ parameters.github_org }}
 
     - id: cluster-pipeline
