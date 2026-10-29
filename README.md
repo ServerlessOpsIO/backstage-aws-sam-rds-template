@@ -11,6 +11,7 @@ When used from Backstage, the template generates a new project that includes:
 - VPC/subnet and security group configuration for the database
 - SSM parameters for cluster host, port, username, and admin credentials
 - GitHub Actions workflows for validation and deployment
+- A developer handbook in `docs/handbook/`, published through Backstage TechDocs
 - A generated repository skeleton ready to be published to GitHub and registered back into Backstage
 
 ## Template structure
@@ -18,6 +19,10 @@ When used from Backstage, the template generates a new project that includes:
 - `template.yaml` — the Backstage Scaffolder template definition
 - `skeleton/` — the generated project skeleton used by the template
 - `pipeline/` — GitHub Actions workflow templates added to the generated repository
+
+The generated handbook lives in `skeleton/docs/handbook/` with its TechDocs
+configuration in `skeleton/mkdocs.yml`. Update it in the same change as any
+skeleton, parameter, or pipeline change it describes.
 
 ## Included infrastructure
 
@@ -58,6 +63,7 @@ Before using this template in a Backstage installation, ensure the following are
 - Catalog entities for domain, system, owner, environment, and cloud account
 - AWS account and VPC/subnet configuration for the target deployment environment
 - AWS SAM and related deployment tooling available in the generated project pipeline
+- Optionally, Backstage TechDocs with MkDocs and `mkdocs-techdocs-core` to render the generated handbook in the component's **Docs** tab
 
 ## Notes
 
